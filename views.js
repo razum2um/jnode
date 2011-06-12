@@ -1,7 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var exec = require("child_process").exec;
-var MPD = require('./lib/mpd.js');
+var MPD = require('./mpd/mpd.js');
 
 exports.start = function (request, response, params) {
   response.writeHead(200, {"Content-Type": "text/html"});
