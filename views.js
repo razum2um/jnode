@@ -8,35 +8,31 @@ var views = require('./lib/views');
 var MPD = require('./mpd/mpd.js');
 
 exports.start = views.basicView(function (request, response, params, callback) {
-  console.log("Request handler 'start' was called.");
-  response.write("Request handler 'start' was called.");
-  callback.call(this);
+    console.log("Request handler 'start' was called.");
+    response.write("Request handler 'start' was called.");
+    callback(request, response, params);
 });
 
-exports.upload = function (request, response, params) {
-    response.writeHead(200, {"Content-Type": "text/html"});
+exports.upload = views.basicView(function (request, response, params, callback) {
     response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
     response.write("Request handler 'upload' was called.");
-    response.end();
-    console.log("Request handler 'upload' was called.");
-}
+    callback(request, response, params);
+});
 
-exports.retrospect = function (request, response) {
-    setTimeout(function() {
+exports.retrospect = views.basicView(function (request, response, params, callback) {
+    var onTimeout = function() {
         response.write(JSON.stringify({'resp':"Request handler 'retrospect' was called."}));
-        response.end();
-        console.log("Request handler 'retrospect' was called.");
-    }, 1000);
-}
+        callback(request, response, params);
+    }
+    setTimeout(onTimeout, 10000);
+});
 
 exports.ls = views.basicView(function (request, response, params, callback) {
-  exec("find / -type f | nl", 
-    { timeout: 1000, maxBuffer: 2*1024 },
-    function (error, stdout, stderr) {
+    var execDone = function (error, stdout, stderr) {
         response.write('<pre>' + stdout + '</pre>');
-        callback.call(this);
-        }
-    );
+        callback(request, response, params);
+    }
+    exec("find / -type f | nl", { maxBuffer: 2000*1024 }, execDone);
 });
 
 exports.mpd = function(request, response, params) {
