@@ -3,22 +3,26 @@ var handlers = require("./handlers");
 
 var handle = {
     "/": handlers.start,
-    "/start": handlers.start,
-    "/upload": handlers.upload,
-    "/retrospect": handlers.retrospect,
-    "/ls": handlers.ls,
-    "/mpd": handlers.mpd,
+    "start": handlers.start,
+    "upload": handlers.upload,
+    "retrospect": handlers.retrospect,
+    "ls": handlers.ls,
+    "mpd": handlers.mpd,
+    "media": handlers.media,
 }
 
 function route(request, response) {
   var pathname = url.parse(request.url).pathname;
-  console.log("About to route a request for " + pathname);
-  if (typeof handle[pathname] === 'function') {
-        response.writeHead(200, {"Content-Type": "text/html"});
-        response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
-        handle[pathname](request, response);
+  var nextRouter = pathname.split('/')[1];
+  var params = pathname.split('/').slice(2);
+  if (nextRouter == "") {
+      nextRouter = "/"; // hack to handle `null` level
+  }
+  console.log("About to route a request for " + pathname + " decided for " + nextRouter);
+  if (typeof handle[nextRouter] === 'function') {
+        handle[nextRouter](request, response, params);
   } else  {
-        response.writeHead(404, {"Content-Type": "text/html"});
+        response.writeHead(404);
         response.end();
         console.log("No request handler found for " + pathname);
   }
