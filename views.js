@@ -3,22 +3,21 @@
 var fs = require('fs');
 var path = require('path');
 var exec = require("child_process").exec;
+
+var views = require('./lib/views');
 var MPD = require('./mpd/mpd.js');
 
-exports.start = function (request, response, params) {
-  response.writeHead(200, {"Content-Type": "text/html"});
-  response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
-  response.write("Request handler 'start' was called.");
-  response.end();
+exports.start = views.basicView(function (request, params) {
   console.log("Request handler 'start' was called.");
-}
+  return "Request handler 'start' was called.";
+});
 
 exports.upload = function (request, response, params) {
-  response.writeHead(200, {"Content-Type": "text/html"});
-  response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
-  response.write("Request handler 'upload' was called.");
-  response.end();
-  console.log("Request handler 'upload' was called.");
+    response.writeHead(200, {"Content-Type": "text/html"});
+    response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
+    response.write("Request handler 'upload' was called.");
+    response.end();
+    console.log("Request handler 'upload' was called.");
 }
 
 exports.retrospect = function (request, response) {
