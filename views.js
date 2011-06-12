@@ -7,9 +7,10 @@ var exec = require("child_process").exec;
 var views = require('./lib/views');
 var MPD = require('./mpd/mpd.js');
 
-exports.start = views.basicView(function (request, params) {
+exports.start = views.basicView(function (request, response, params, callback) {
   console.log("Request handler 'start' was called.");
-  return "Request handler 'start' was called.";
+  response.write("Request handler 'start' was called.");
+  callback.call(this);
 });
 
 exports.upload = function (request, response, params) {
@@ -28,18 +29,15 @@ exports.retrospect = function (request, response) {
     }, 1000);
 }
 
-exports.ls = function (request, response, params) {
+exports.ls = views.basicView(function (request, response, params, callback) {
   exec("find / -type f | nl", 
-    { timeout: 1000, maxBuffer: 20000*1024 },
+    { timeout: 1000, maxBuffer: 2*1024 },
     function (error, stdout, stderr) {
-      response.writeHead(200, {"Content-Type": "text/html"});
-      response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
-      response.write('<pre>');
-      response.write(stdout);
-      response.write('</pre>');
-      response.end();
-  });
-}
+        response.write('<pre>' + stdout + '</pre>');
+        callback.call(this);
+        }
+    );
+});
 
 exports.mpd = function(request, response, params) {
     var mpd = new MPD();
