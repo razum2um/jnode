@@ -1,5 +1,5 @@
-var url = require("url");
 var handlers = require("./handlers");
+var appRouter = require("./app/router.js");
 
 var handle = {
     "/": handlers.start,
@@ -9,18 +9,25 @@ var handle = {
     "ls": handlers.ls,
     "mpd": handlers.mpd,
     "media": handlers.media,
+    "app": appRouter.route,
 }
 
-function route(request, response) {
-  var pathname = url.parse(request.url).pathname;
+exports.route = function (request, response, urlParams) {
+  if (urlParams[0] !== '') {
+      var pathChunks = ['']; // used on the second level
+  } else {
+      var pathChunks = []; // on the 1st level we have params = ['', 'media' ...]
+  }
+  pathChunks = pathChunks.concat(urlParams);
+  var pathname = pathChunks.join('/');
   var nextRouter = pathname.split('/')[1];
-  var params = pathname.split('/').slice(2);
+  var nextUrlParams = pathname.split('/').slice(2);
   if (nextRouter == "") {
       nextRouter = "/"; // hack to handle `null` level
   }
-  console.log("About to route a request for " + pathname + " decided for " + nextRouter);
+  console.log("About to route in 'main' a request for " + pathname + " decided for " + nextRouter);
   if (typeof handle[nextRouter] === 'function') {
-        handle[nextRouter](request, response, params);
+        handle[nextRouter](request, response, nextUrlParams);
   } else  {
         response.writeHead(404);
         response.end();
@@ -28,4 +35,3 @@ function route(request, response) {
   }
 }
 
-exports.route = route;
