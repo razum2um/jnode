@@ -11,21 +11,14 @@ var MPD = require('./mpd/mpd.js');
 var util = require('util');
 
 exports.start = views.httpView(function (request, response, params, next) {
-  console.log("Request handler 'start' was called.");
+  console.log('in ' + __filename + ' got: ' + util.inspect(params));
   var body = '';
   body += '<p>Title = <span id="title"></span></p>';
   body += '<p>Date = <span id="date"></span></p>';
   next(null, body);
 });
 
-exports.upload = function (request, response, params) {
-    response.writeHead(200, {"Content-Type": "text/html"});
-    response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
-    response.write("Request handler 'upload' was called.");
-    response.end();
-    console.log("Request handler 'upload' was called.");
-}
-
+/*
 exports.retrospect = function (request, response) {
     setTimeout(function() {
         response.write(JSON.stringify({'resp':"Request handler 'retrospect' was called."}));
@@ -33,6 +26,7 @@ exports.retrospect = function (request, response) {
         console.log("Request handler 'retrospect' was called.");
     }, 1000);
 }
+*/
 
 exports.ls = views.httpView(function (request, response, params, next) {
   exec("find / -type f | nl", 
