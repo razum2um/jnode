@@ -10,12 +10,12 @@ var MPD = require('./mpd/mpd.js');
 
 var util = require('util');
 
-exports.start = views.httpView(function (request, response, params, cb) {
+exports.start = views.httpView(function (request, response, params, next) {
   console.log("Request handler 'start' was called.");
   var body = '';
   body += '<p>Title = <span id="title"></span></p>';
   body += '<p>Date = <span id="date"></span></p>';
-  cb && cb(null, body);
+  next(null, body);
 });
 
 exports.upload = function (request, response, params) {
@@ -34,17 +34,17 @@ exports.retrospect = function (request, response) {
     }, 1000);
 }
 
-exports.ls = views.httpView(function (request, response, params, cb) {
+exports.ls = views.httpView(function (request, response, params, next) {
   exec("find / -type f | nl", 
     { timeout: 1000, maxBuffer: 2*1024 },
     function (error, stdout, stderr) {
         response.write('<pre>' + stdout + '</pre>');
-        cb && cb.call();
+        next();
         }
     );
 });
 
-exports.mpd = views.jsonView(function(request, response, params, cb) {
+exports.mpd = views.jsonView(function(request, response, params, next) {
     var mpd = new MPD();
     mpd.on('connect', function() {
         var title = '';
@@ -55,7 +55,7 @@ exports.mpd = views.jsonView(function(request, response, params, cb) {
             console.log(util.inspect(currentSong));
             if (currentSong.Title !== undefined) {
                 var jObj = { title: currentSong.Title };
-                cb && cb(null, jObj);
+                next(null, jObj);
             } else { 
                 // the 4th attempt = volume
                 mpd.send('currentsong', printSong);
@@ -105,10 +105,10 @@ exports.media = function(request, response, params) {
     });
 }
 
-exports.date = views.jsonView(function(req, res, params, cb) {
+exports.date = views.jsonView(function(req, res, params, next) {
     exec('sleep 1; date', execCb);
     function execCb(err, stdout, stderr) {
         var jObj = { date: stdout };
-        cb(null, jObj);
+        next(null, jObj);
     }
 });
