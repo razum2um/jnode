@@ -12,8 +12,8 @@ var util = require('util');
 
 exports.start = views.httpView(function (request, response, params, cb) {
   console.log("Request handler 'start' was called.");
-  response.write("Request handler 'start' was called.");
-  cb && cb();
+  var body = '<div id="title"></div>';
+  cb && cb(null, body);
 });
 
 exports.upload = function (request, response, params) {
@@ -42,40 +42,24 @@ exports.ls = views.httpView(function (request, response, params, cb) {
     );
 });
 
-exports.mpd = views.httpView(function(request, response, params, cb) {
+exports.mpd = views.jsonView(function(request, response, params, cb) {
     var mpd = new MPD();
     mpd.on('connect', function() {
         var title = '';
         var artist = '';
 
-        mpd.send('currentsong', function(currentSong) {
-            response.write(currentSong.Title);
-            cb && cb();
-        });
+        mpd.send('currentsong', printSong);
+        function printSong(currentSong) {
+            console.log(util.inspect(currentSong));
+            if (currentSong.Title !== undefined) {
+                var jObj = { title: currentSong.Title };
+                cb && cb(null, jObj);
+            } else { 
+                // the 4th attempt = volume
+                mpd.send('currentsong', printSong);
+            }
+        };
         
-        /*
-        mpd.on('Title', function(t) {
-          title = t;
-        });
-        
-        mpd.on('Artist', function(a) {
-          artist = a;
-        });
-        
-        mpd.on('time', function(time) {    
-          var secs = time.split(':')[0];
-          var total = time.split(':')[1];
-          
-          var state = artist + ' - ' + title + ' / at: ' + (secs) + ' - total: ' + (total);
-          console.log(state);
-
-          response.writeHead(200, {"Content-Type": "text/html"});
-          response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
-          response.write(state);
-          response.end();
-          //mpd.close();
-        });
-        */
     });
 });
 
