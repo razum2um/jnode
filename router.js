@@ -7,7 +7,9 @@ var urls = {
     "^$": views.start, // required definition "/"
     "^media/.*": views.media, // required media handler EXACT "^media/.*"
     "^app": appRouter, // optional give a nested router
+    "^start/plus/(?<day>[0-9]+)/": views.start, // simple view-functions
     "^start": views.start, // simple view-functions
+
     "^upload": views.upload,
     "^retrospect": views.retrospect,
     "^ls": views.ls,

@@ -13,7 +13,6 @@ var util = require('util');
 exports.start = views.httpView(function (request, response, params, next) {
   console.log('in ' + __filename + ' got: ' + util.inspect(params));
   var body = '';
-  body += '<p>Title = <span id="title"></span></p>';
   body += '<p>Date = <span id="date"></span></p>';
 
   // TODO: send an Context obj here
@@ -72,7 +71,14 @@ exports.media = function(request, response, params) {
     }
     // end log-closure
     
-    var MEDIA_PREFIX = 'media'
+    // decided by routing
+    // you setup
+    //
+    // "^media/.*": views.media
+    //
+    // and everything under MEDIA_PREFIX/media gets aviable
+    var MEDIA_PREFIX = '.';  // relative root
+
     var pathChunks = [MEDIA_PREFIX];
     pathChunks = pathChunks.concat(params);
 	var filePath = pathChunks.join('/');

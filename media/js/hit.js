@@ -4,7 +4,7 @@
             // date updater
             $.get('/date', function(json) {
                 $('#date').text(json.date);
-                _poll();
+                //_poll();
             });
         };
         _poll();
