@@ -14,6 +14,7 @@ var urls = {
     "^retrospect": views.retrospect,
     "^ls": views.ls,
     "^mpd": views.mpd,
+    "^date/plus/(?<day>[0-9]+)/": views.date,
     "^date": views.date,
 }
 

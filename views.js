@@ -11,7 +11,6 @@ var MPD = require('./mpd/mpd.js');
 var util = require('util');
 
 exports.start = views.httpView(function (request, response, params, next) {
-  console.log('in ' + __filename + ' got: ' + util.inspect(params));
   var body = '';
   body += '<p>Date = <span id="date"></span></p>';
 
@@ -107,10 +106,19 @@ exports.media = function(request, response, params) {
     });
 }
 
-exports.date = views.jsonView(function(req, res, params, next) {
-    exec('sleep 1; date', execCb);
+exports.date = views.View(function(req, res, params, next) {
+
+    var plus = '0';
+    if (params.length && params.day !== undefined) {
+        plus = params.day;
+    }
+    exec('sleep 1; date -R --date="' + plus + ' day"', execCb);
     function execCb(err, stdout, stderr) {
-        var jObj = { date: stdout };
-        next(null, jObj);
+        if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
+            var resp = { date: stdout + ' (in ' + plus + ' day)'};
+        } else {
+            var resp = stdout + ' (in ' + plus + ' day)';
+        }
+        next(null, resp);
     }
 });
