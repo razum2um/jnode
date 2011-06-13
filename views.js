@@ -34,8 +34,8 @@ exports.ls = views.httpView(function (request, response, params, next) {
   exec("find / -type f | nl", 
     { timeout: 1000, maxBuffer: 2*1024 },
     function (error, stdout, stderr) {
-        response.write('<pre>' + stdout + '</pre>');
-        next();
+        var resp = '<pre>' + stdout + '</pre>';
+        next(null, resp);
         }
     );
 });
