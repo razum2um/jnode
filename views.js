@@ -15,6 +15,8 @@ exports.start = views.httpView(function (request, response, params, next) {
   var body = '';
   body += '<p>Title = <span id="title"></span></p>';
   body += '<p>Date = <span id="date"></span></p>';
+
+  // TODO: send an Context obj here
   next(null, body);
 });
 
