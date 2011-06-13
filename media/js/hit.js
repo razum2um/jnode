@@ -1,7 +1,12 @@
 (function($) {
     $(document).ready( function() {
-        $.get('/mpd', function(json) {
-            $('#title').text(json.title);
-        });
+        function _poll() {
+            // date updater
+            $.get('/date', function(json) {
+                $('#date').text(json.date);
+                _poll();
+            });
+        };
+        _poll();
     });
 })(jQuery);

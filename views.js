@@ -12,7 +12,9 @@ var util = require('util');
 
 exports.start = views.httpView(function (request, response, params, cb) {
   console.log("Request handler 'start' was called.");
-  var body = '<div id="title"></div>';
+  var body = '';
+  body += '<p>Title = <span id="title"></span></p>';
+  body += '<p>Date = <span id="date"></span></p>';
   cb && cb(null, body);
 });
 
@@ -65,6 +67,15 @@ exports.mpd = views.jsonView(function(request, response, params, cb) {
 
 exports.media = function(request, response, params) {
 
+    // log-closure
+    function log(statCode, url, ip, err) {
+      var logStr = statCode + ' - ' + url + ' - ' + ip;
+      if (err)
+        logStr += ' - ' + err;
+      console.log(logStr);
+    }
+    // end log-closure
+    
     var MEDIA_PREFIX = 'media'
     var pathChunks = [MEDIA_PREFIX];
     pathChunks = pathChunks.concat(params);
@@ -94,9 +105,10 @@ exports.media = function(request, response, params) {
     });
 }
 
-function log(statCode, url, ip, err) {
-  var logStr = statCode + ' - ' + url + ' - ' + ip;
-  if (err)
-    logStr += ' - ' + err;
-  console.log(logStr);
-}
+exports.date = views.jsonView(function(req, res, params, cb) {
+    exec('sleep 1; date', execCb);
+    function execCb(err, stdout, stderr) {
+        var jObj = { date: stdout };
+        cb(null, jObj);
+    }
+});

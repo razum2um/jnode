@@ -11,6 +11,7 @@ var urls = {
     "ls": views.ls,
     "mpd": views.mpd,
     "media": views.media,
+    "date": views.date,
     "app": appRouter.route,
 }
 

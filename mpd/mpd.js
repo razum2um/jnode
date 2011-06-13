@@ -74,7 +74,7 @@ MPD.prototype = {
         } else {
           clearInterval(self.updateTimer);
         }
-      }, 10);
+      }, 500);
       
       self.callback('connect');
     };
