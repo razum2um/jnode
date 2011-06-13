@@ -14,7 +14,7 @@ exports.start = function(request, response, params) {
         response.write("Request handler 'start' was called.");
     });
     //console.log(view()());
-}
+};
 
 /*
 exports.upload = views.basicView(function (request, response, params, callback) {
@@ -39,42 +39,43 @@ exports.ls = views.basicView(function (request, response, params, callback) {
     exec("find / -type f | nl", { maxBuffer: 2000*1024 }, execDone);
 });
 
-exports.mpd = views.basicView(function(request, response, params, callback) {
-    var mpd = new MPD();
-    mpd.on('connect', function() {
-        var title = '';
-        var artist = '';
-
-        mpd.send('currentsong', function(cs) {
-          response.write("Now playing: " + cs.Title + " by " + cs.Artist);
-          callback(request, response, params);
-        });
-        
-        mpd.on('Title', function(t) {
-          title = t;
-        });
-        
-        mpd.on('Artist', function(a) {
-          artist = a;
-        });
-        //
-        
-        mpd.on('time', function(time) {    
-          var secs = time.split(':')[0];
-          var total = time.split(':')[1];
-          
-          var state = artist + ' - ' + title + ' / at: ' + (secs) + ' - total: ' + (total);
-          console.log(state);
-
-          response.writeHead(200, {"Content-Type": "text/html"});
-          response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
-          response.write(state);
-          response.end();
-        });
-        //
-    });
-});
 */
+exports.mpd = function(request, response, params) {
+    var view = View(request, response, params, function(response) {
+        var mpd = new MPD();
+        mpd.on('connect', function() {
+            var title = '';
+            var artist = '';
+
+            mpd.send('currentsong', function(cs) {
+              response.write("Now playing: " + cs.Title + " by " + cs.Artist);
+            });
+            
+            /*
+            mpd.on('Title', function(t) {
+              title = t;
+            });
+            
+            mpd.on('Artist', function(a) {
+              artist = a;
+            });
+            
+            mpd.on('time', function(time) {    
+              var secs = time.split(':')[0];
+              var total = time.split(':')[1];
+              
+              var state = artist + ' - ' + title + ' / at: ' + (secs) + ' - total: ' + (total);
+              console.log(state);
+
+              response.writeHead(200, {"Content-Type": "text/html"});
+              response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
+              response.write(state);
+              response.end();
+            });
+            */
+        });
+    });
+};
 
 exports.media = function(request, response, params) {
 
