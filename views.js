@@ -2,17 +2,21 @@
 
 var fs = require('fs');
 var path = require('path');
+var util = require('util');
 var exec = require("child_process").exec;
 
-var views = require('./lib/views');
+var View = require('./lib/views');
 var MPD = require('./mpd/mpd.js');
 
-exports.start = views.basicView(function (request, response, params, callback) {
-    console.log("Request handler 'start' was called.");
-    response.write("Request handler 'start' was called.");
-    callback(request, response, params);
-});
+exports.start = function(request, response, params) {
+    var view = new View(request, response, params, function(response) {
+        console.log("Request handler 'start' was called.");
+        response.write("Request handler 'start' was called.");
+    });
+    //console.log(view()());
+}
 
+/*
 exports.upload = views.basicView(function (request, response, params, callback) {
     response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
     response.write("Request handler 'upload' was called.");
@@ -35,14 +39,15 @@ exports.ls = views.basicView(function (request, response, params, callback) {
     exec("find / -type f | nl", { maxBuffer: 2000*1024 }, execDone);
 });
 
-exports.mpd = function(request, response, params) {
+exports.mpd = views.basicView(function(request, response, params, callback) {
     var mpd = new MPD();
     mpd.on('connect', function() {
         var title = '';
         var artist = '';
 
         mpd.send('currentsong', function(cs) {
-          console.log(cs);
+          response.write("Now playing: " + cs.Title + " by " + cs.Artist);
+          callback(request, response, params);
         });
         
         mpd.on('Title', function(t) {
@@ -52,6 +57,7 @@ exports.mpd = function(request, response, params) {
         mpd.on('Artist', function(a) {
           artist = a;
         });
+        //
         
         mpd.on('time', function(time) {    
           var secs = time.split(':')[0];
@@ -64,10 +70,11 @@ exports.mpd = function(request, response, params) {
           response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
           response.write(state);
           response.end();
-          //mpd.close();
         });
+        //
     });
-}
+});
+*/
 
 exports.media = function(request, response, params) {
 
