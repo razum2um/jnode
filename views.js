@@ -5,6 +5,7 @@ var path = require('path');
 var exec = require("child_process").exec;
 
 var views = require('./lib/views');
+var paperboy = require('./lib/paperboy');
 var MPD = require('./mpd/mpd.js');
 
 var util = require('util');
@@ -80,39 +81,38 @@ exports.mpd = views.httpView(function(request, response, params, cb) {
 
 exports.media = function(request, response, params) {
 
-    var pathChunks = ['.'];
+    var MEDIA_PREFIX = 'media'
+    var pathChunks = [MEDIA_PREFIX];
     pathChunks = pathChunks.concat(params);
 	var filePath = pathChunks.join('/');
-    console.log('request filePath: ' + filePath);
 
-	var extname = path.extname(filePath);
-	var contentType = 'text/html';
-	switch (extname) {
-		case '.js':
-			contentType = 'text/javascript';
-			break;
-		case '.css':
-			contentType = 'text/css';
-			break;
-	}
-	
-	path.exists(filePath, function(exists) {
-	
-		if (exists) {
-			fs.readFile(filePath, function(error, content) {
-				if (error) {
-					response.writeHead(500);
-					response.end();
-				}
-				else {
-					response.writeHead(200, { 'Content-Type': contentType });
-					response.end(content, 'utf-8');
-				}
-			});
-		}
-		else {
-			response.writeHead(404);
-			response.end();
-		}
-	});
+    // TODO: check if exists & perms, as changed parepboy
+    var ip = request.connection.remoteAddress;
+    paperboy
+    .deliver(filePath, request, response)
+    .addHeader('Expires', 300)
+    .addHeader('X-PaperRoute', 'Node')
+    .before(function() {
+      console.log('Received Request');
+    })
+    .after(function(statCode) {
+      log(statCode, request.url, ip);
+    })
+    .error(function(statCode, msg) {
+      response.writeHead(statCode, {'Content-Type': 'text/plain'});
+      response.end("Error " + statCode);
+      log(statCode, request.url, ip, msg);
+    })
+    .otherwise(function(err) {
+      response.writeHead(404, {'Content-Type': 'text/plain'});
+      response.end("Error 404: File not found");
+      log(404, request.url, ip, err);
+    });
+}
+
+function log(statCode, url, ip, err) {
+  var logStr = statCode + ' - ' + url + ' - ' + ip;
+  if (err)
+    logStr += ' - ' + err;
+  console.log(logStr);
 }
