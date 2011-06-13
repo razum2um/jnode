@@ -7,10 +7,12 @@ var exec = require("child_process").exec;
 var views = require('./lib/views');
 var MPD = require('./mpd/mpd.js');
 
-exports.start = views.basicView(function (request, response, params, callback) {
+var util = require('util');
+
+exports.start = views.httpView(function (request, response, params, cb) {
   console.log("Request handler 'start' was called.");
   response.write("Request handler 'start' was called.");
-  callback.call(this);
+  cb && cb();
 });
 
 exports.upload = function (request, response, params) {
@@ -29,26 +31,28 @@ exports.retrospect = function (request, response) {
     }, 1000);
 }
 
-exports.ls = views.basicView(function (request, response, params, callback) {
+exports.ls = views.httpView(function (request, response, params, cb) {
   exec("find / -type f | nl", 
     { timeout: 1000, maxBuffer: 2*1024 },
     function (error, stdout, stderr) {
         response.write('<pre>' + stdout + '</pre>');
-        callback.call(this);
+        cb && cb.call();
         }
     );
 });
 
-exports.mpd = function(request, response, params) {
+exports.mpd = views.httpView(function(request, response, params, cb) {
     var mpd = new MPD();
     mpd.on('connect', function() {
         var title = '';
         var artist = '';
 
-        mpd.send('currentsong', function(cs) {
-          console.log(cs);
+        mpd.send('currentsong', function(currentSong) {
+            response.write(currentSong.Title);
+            cb && cb();
         });
         
+        /*
         mpd.on('Title', function(t) {
           title = t;
         });
@@ -70,8 +74,9 @@ exports.mpd = function(request, response, params) {
           response.end();
           //mpd.close();
         });
+        */
     });
-}
+});
 
 exports.media = function(request, response, params) {
 
