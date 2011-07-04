@@ -8,8 +8,8 @@ function start(router) {
     router.route(request, response, urlParams);
   }
 
-  http.createServer(onRequest).listen(8888);
-  console.log("Server has started.");
+  http.createServer(onRequest).listen(8000);
+  console.log("Server has started at http://127.0.0.1:8000");
 }
 
 exports.start = start;
