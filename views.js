@@ -5,113 +5,121 @@ var path = require('path');
 var util = require('util');
 var exec = require("child_process").exec;
 
-var View = require('./lib/views');
+var views = require('./lib/views');
+var paperboy = require('./lib/paperboy');
 var MPD = require('./mpd/mpd.js');
 
-exports.start = function(request, response, params) {
-    var view = new View(request, response, params, function(response) {
-        console.log("Request handler 'start' was called.");
-        response.write("Request handler 'start' was called.");
-    });
-    //console.log(view()());
-};
+var util = require('util');
+
+exports.start = views.httpView(function (request, response, params, next) {
+  var body = '';
+  body += '<p>Date = <span id="date"></span></p>';
+
+  // TODO: send an Context obj here
+  next(null, body);
+});
 
 /*
-exports.upload = views.basicView(function (request, response, params, callback) {
-    response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
-    response.write("Request handler 'upload' was called.");
-    callback(request, response, params);
-});
-
-exports.retrospect = views.basicView(function (request, response, params, callback) {
-    var onTimeout = function() {
+exports.retrospect = function (request, response) {
+    setTimeout(function() {
         response.write(JSON.stringify({'resp':"Request handler 'retrospect' was called."}));
-        callback(request, response, params);
-    }
-    setTimeout(onTimeout, 10000);
-});
-
-exports.ls = views.basicView(function (request, response, params, callback) {
-    var execDone = function (error, stdout, stderr) {
-        response.write('<pre>' + stdout + '</pre>');
-        callback(request, response, params);
-    }
-    exec("find / -type f | nl", { maxBuffer: 2000*1024 }, execDone);
-});
-
+        response.end();
+        console.log("Request handler 'retrospect' was called.");
+    }, 1000);
+}
 */
-exports.mpd = function(request, response, params) {
-    var view = View(request, response, params, function(response) {
-        var mpd = new MPD();
-        mpd.on('connect', function() {
-            var title = '';
-            var artist = '';
 
-            mpd.send('currentsong', function(cs) {
-              response.write("Now playing: " + cs.Title + " by " + cs.Artist);
-            });
-            
-            /*
-            mpd.on('Title', function(t) {
-              title = t;
-            });
-            
-            mpd.on('Artist', function(a) {
-              artist = a;
-            });
-            
-            mpd.on('time', function(time) {    
-              var secs = time.split(':')[0];
-              var total = time.split(':')[1];
-              
-              var state = artist + ' - ' + title + ' / at: ' + (secs) + ' - total: ' + (total);
-              console.log(state);
+exports.ls = views.httpView(function (request, response, params, next) {
+  exec("find / -type f | nl", 
+    { timeout: 1000, maxBuffer: 2*1024 },
+    function (error, stdout, stderr) {
+        var resp = '<pre>' + stdout + '</pre>';
+        next(null, resp);
+        }
+    );
+});
 
-              response.writeHead(200, {"Content-Type": "text/html"});
-              response.write('<head><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script></head>');
-              response.write(state);
-              response.end();
-            });
-            */
-        });
+exports.mpd = views.jsonView(function(request, response, params, next) {
+    var mpd = new MPD();
+    mpd.on('connect', function() {
+        var title = '';
+        var artist = '';
+
+        mpd.send('currentsong', printSong);
+        function printSong(currentSong) {
+            console.log(util.inspect(currentSong));
+            if (currentSong.Title !== undefined) {
+                var jObj = { title: currentSong.Title };
+                next(null, jObj);
+            } else { 
+                // the 4th attempt = volume
+                mpd.send('currentsong', printSong);
+            }
+        };
+        
     });
-};
+});
 
 exports.media = function(request, response, params) {
 
-    var pathChunks = ['.'];
+    // log-closure
+    function log(statCode, url, ip, err) {
+      var logStr = statCode + ' - ' + url + ' - ' + ip;
+      if (err)
+        logStr += ' - ' + err;
+      console.log(logStr);
+    }
+    // end log-closure
+    
+    // decided by routing
+    // you setup
+    //
+    // "^media/.*": views.media
+    //
+    // and everything under MEDIA_PREFIX/media gets aviable
+    var MEDIA_PREFIX = '.';  // relative root
+
+    var pathChunks = [MEDIA_PREFIX];
     pathChunks = pathChunks.concat(params);
 	var filePath = pathChunks.join('/');
-    console.log('request filePath: ' + filePath);
 
-	var extname = path.extname(filePath);
-	var contentType = 'text/html';
-	switch (extname) {
-		case '.js':
-			contentType = 'text/javascript';
-			break;
-		case '.css':
-			contentType = 'text/css';
-			break;
-	}
-	
-	path.exists(filePath, function(exists) {
-	
-		if (exists) {
-			fs.readFile(filePath, function(error, content) {
-				if (error) {
-					response.writeHead(500);
-					response.end();
-				}
-				else {
-					response.writeHead(200, { 'Content-Type': contentType });
-					response.end(content, 'utf-8');
-				}
-			});
-		}
-		else {
-			response.writeHead(404);
-			response.end();
-		}
-	});
+    // TODO: check if exists & perms, as changed parepboy
+    var ip = request.connection.remoteAddress;
+    paperboy
+    .deliver(filePath, request, response)
+    .addHeader('Expires', 300)
+    .addHeader('X-PaperRoute', 'Node')
+    .before(function() {
+      console.log('Received Request');
+    })
+    .after(function(statCode) {
+      log(statCode, request.url, ip);
+    })
+    .error(function(statCode, msg) {
+      response.writeHead(statCode, {'Content-Type': 'text/plain'});
+      response.end("Error " + statCode);
+      log(statCode, request.url, ip, msg);
+    })
+    .otherwise(function(err) {
+      response.writeHead(404, {'Content-Type': 'text/plain'});
+      response.end("Error 404: File not found");
+      log(404, request.url, ip, err);
+    });
 }
+
+exports.date = views.View(function(req, res, params, next) {
+
+    var plus = '0';
+    if (params.length && params.day !== undefined) {
+        plus = params.day;
+    }
+    exec('sleep 1; date -R --date="' + plus + ' day"', execCb);
+    function execCb(err, stdout, stderr) {
+        if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
+            var resp = { date: stdout + ' (in ' + plus + ' day)'};
+        } else {
+            var resp = stdout + ' (in ' + plus + ' day)';
+        }
+        next(null, resp);
+    }
+});

@@ -1,0 +1,5 @@
+It's a small nodejs framework, influenced by my expirience in Django & Zend
+
+There is only regexp router, based on XRegExp and static server (modified paperboy) yet
+But things are in progress :)
+
